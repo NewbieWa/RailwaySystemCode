@@ -26,6 +26,7 @@ class VideoAnalysisService:
             "status": JobStatus.PENDING,
             "message": None,
             "result": None,
+            "created_at": datetime.now(),
             "completed_at": None,
             "model_name": model_name,
             "original_filename": original_filename
@@ -87,10 +88,30 @@ class VideoAnalysisService:
             "status": job["status"],
             "result": job["result"],
             "message": job["message"],
-            "completed_at": job["completed_at"]
+            "created_at": job.get("created_at"),
+            "completed_at": job["completed_at"],
+            "model_name": job.get("model_name"),
+            "original_filename": job.get("original_filename")
         }
     
     def list_models(self) -> list[str]:
         """List available models"""
         return self.model_registry.list_models()
+
+    def list_jobs(self, limit: int = 50) -> list[Dict[str, Any]]:
+        """List recent jobs with basic info, newest first"""
+        items = []
+        for job_id, job in self.jobs.items():
+            items.append({
+                "job_id": job_id,
+                "status": job.get("status"),
+                "message": job.get("message"),
+                "created_at": job.get("created_at"),
+                "completed_at": job.get("completed_at"),
+                "model_name": job.get("model_name"),
+                "original_filename": job.get("original_filename"),
+            })
+        # Sort by created_at desc
+        items.sort(key=lambda x: x.get("created_at") or datetime.min, reverse=True)
+        return items[:limit]
 

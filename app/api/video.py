@@ -1,4 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import Depends
 from typing import List
 
 from ..models.schemas import UploadResponse, StatusResponse, ResultResponse
@@ -17,7 +18,7 @@ def get_analysis_service() -> VideoAnalysisService:
 async def upload_video(
     file: UploadFile = File(...),
     model_name: str = Form(...),
-    analysis_service: VideoAnalysisService = None
+    analysis_service: VideoAnalysisService = Depends(get_analysis_service)
 ):
     """Upload video for analysis"""
     if analysis_service is None:
@@ -45,7 +46,7 @@ async def upload_video(
 
 
 @router.get("/{job_id}/status", response_model=StatusResponse)
-async def get_job_status(job_id: str, analysis_service: VideoAnalysisService = None):
+async def get_job_status(job_id: str, analysis_service: VideoAnalysisService = Depends(get_analysis_service)):
     """Get job status"""
     if analysis_service is None:
         analysis_service = get_analysis_service()
@@ -58,7 +59,7 @@ async def get_job_status(job_id: str, analysis_service: VideoAnalysisService = N
 
 
 @router.get("/{job_id}/result", response_model=ResultResponse)
-async def get_job_result(job_id: str, analysis_service: VideoAnalysisService = None):
+async def get_job_result(job_id: str, analysis_service: VideoAnalysisService = Depends(get_analysis_service)):
     """Get job result"""
     if analysis_service is None:
         analysis_service = get_analysis_service()
@@ -71,10 +72,18 @@ async def get_job_result(job_id: str, analysis_service: VideoAnalysisService = N
 
 
 @router.get("/models", response_model=List[str])
-async def list_models(analysis_service: VideoAnalysisService = None):
+async def list_models(analysis_service: VideoAnalysisService = Depends(get_analysis_service)):
     """List available models"""
     if analysis_service is None:
         analysis_service = get_analysis_service()
     
     return analysis_service.list_models()
+
+
+@router.get("/jobs")
+async def list_jobs(analysis_service: VideoAnalysisService = Depends(get_analysis_service)):
+    """List recent jobs"""
+    if analysis_service is None:
+        analysis_service = get_analysis_service()
+    return analysis_service.list_jobs()
 
