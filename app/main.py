@@ -23,8 +23,8 @@ analysis_service = VideoAnalysisService(storage_service, model_registry)
 
 # Create FastAPI app
 app = FastAPI(
-    title="Railway System - Video Analysis Service",
-    description="Web service and video analysis service",
+    title="视频分析校验系统",
+    description="Video Analysis Validation Service",
     version="1.0.0"
 )
 
@@ -42,7 +42,7 @@ async def read_index():
     """Serve the main upload page"""
     if os.path.exists("static/index.html"):
         return FileResponse("static/index.html")
-    return {"message": "Video Analysis Service", "docs": "/docs"}
+    return {"message": "视频分析校验系统", "docs": "/docs"}
 
 
 # Dependency injection for services

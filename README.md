@@ -1,4 +1,4 @@
-# Railway System - Video Analysis Service
+# 视频分析校验系统
 
 一个基于FastAPI的Python服务框架，提供Web服务和视频分析功能。
 
@@ -24,54 +24,91 @@
 ## 项目结构
 
 ```
-RailwaySystemCode/
-├── app/
+视频分析校验系统/
+├── app/                     # 后端FastAPI应用
 │   ├── __init__.py
-│   ├── main.py                 # FastAPI应用主文件
+│   ├── main.py             # FastAPI应用主文件
 │   ├── api/
 │   │   ├── __init__.py
-│   │   ├── health.py          # 健康检查API
-│   │   └── video.py           # 视频分析API
+│   │   ├── health.py       # 健康检查API
+│   │   └── video.py        # 视频分析API
 │   ├── models/
 │   │   ├── __init__.py
-│   │   └── schemas.py         # Pydantic数据模型
+│   │   └── schemas.py      # Pydantic数据模型
 │   └── services/
-│       ├── file_storage.py    # 文件存储服务
-│       ├── model_runner.py    # 模型运行器
-│       └── video_analysis.py  # 视频分析服务
+│       ├── file_storage.py # 文件存储服务
+│       ├── model_runner.py # 模型运行器
+│       └── video_analysis.py # 视频分析服务
+├── frontend/               # 前端Vue应用
+│   ├── src/
+│   │   ├── components/     # Vue组件
+│   │   ├── views/          # 页面视图
+│   │   ├── services/       # API服务
+│   │   ├── stores/         # Pinia状态管理
+│   │   └── router/         # 路由配置
+│   ├── package.json        # 前端依赖配置
+│   ├── vite.config.ts      # Vite构建配置
+│   └── tsconfig.json       # TypeScript配置
 ├── static/
-│   └── index.html            # Web上传界面
-├── requirements.txt          # Python依赖
-├── config.py                # 配置管理
-├── run_server.py           # 启动脚本
-└── README.md               # 项目说明
+│   └── index.html          # 静态Web上传界面
+├── uploads/                # 视频文件存储目录
+├── requirements.txt        # Python依赖
+├── config.py              # 配置管理
+├── run_server.py          # 后端启动脚本
+├── start_dev.py           # 开发环境一键启动脚本
+└── README.md              # 项目说明
 ```
 
 ## 安装和运行
 
 ### 1. 安装依赖
 
+#### 后端依赖
 ```bash
 pip install -r requirements.txt
 ```
 
+#### 前端依赖
+```bash
+cd frontend
+npm install
+```
+
 ### 2. 启动服务
 
+#### 🚀 一键启动（推荐）
+使用新的开发启动脚本，同时启动后端和前端：
+
+```bash
+python start_dev.py
+```
+
+这个脚本会：
+- 自动启动后端FastAPI服务 (端口8000)
+- 自动启动前端Vue开发服务器 (端口5173)
+- 自动安装前端依赖（如果未安装）
+- 提供统一的进程管理
+
+#### 手动启动
+如果需要单独启动服务：
+
+**仅启动后端：**
 ```bash
 python run_server.py
 ```
 
-或者直接使用uvicorn：
-
+**仅启动前端：**
 ```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+cd frontend
+npm run dev
 ```
 
 ### 3. 访问服务
 
-- Web界面: http://localhost:8000
-- API文档: http://localhost:8000/docs
-- 健康检查: http://localhost:8000/api/health
+- 🌐 **前端Vue应用**: http://localhost:5173 （主要界面）
+- 🌐 **后端API**: http://localhost:8000
+- 📚 **API文档**: http://localhost:8000/docs
+- ❤️ **健康检查**: http://localhost:8000/api/health
 
 ## API使用说明
 

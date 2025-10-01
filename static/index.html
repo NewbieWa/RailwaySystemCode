@@ -3,204 +3,57 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>视频分析上传</title>
+  <title>视频分析校验</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; margin: 40px; }
-    .container { display: grid; grid-template-columns: 280px 1fr; gap: 24px; align-items: start; }
-    .card { padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px; }
-    .sidebar { position: sticky; top: 24px; height: calc(100vh - 80px); overflow: auto; }
-    label { display:block; margin: 12px 0 6px; font-weight: 600; }
-    input, select, button { padding: 8px 12px; }
-    button { cursor: pointer; }
-    .muted { color: #6b7280; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace; }
-    .row { margin: 8px 0; }
-    .status { margin-top: 16px; }
-    .result { white-space: pre-wrap; background: #f8fafc; padding: 12px; border-radius: 8px; }
-    .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-    .logo img { height: 40px; width: auto; }
-    .jobs { list-style: none; padding: 0; margin: 0; }
-    .jobs li { padding: 10px 12px; border-bottom: 1px solid #eef2f7; cursor: pointer; }
-    .jobs li:hover { background: #f8fafc; }
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
-    .success { background: #ecfdf5; color: #047857; }
-    .failed { background: #fef2f2; color: #b91c1c; }
-    .running { background: #eff6ff; color: #1d4ed8; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; 
+      margin: 0; 
+      padding: 40px; 
+      background: #f8fafc;
+      text-align: center;
+    }
+    .container { max-width: 600px; margin: 0 auto; }
+    .card { 
+      background: white; 
+      padding: 40px; 
+      border-radius: 12px; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 24px;
+    }
+    .btn { 
+      background: #3b82f6; 
+      color: white; 
+      border: none; 
+      padding: 12px 24px; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      text-decoration: none;
+      display: inline-block;
+      margin: 8px;
+      font-size: 16px;
+    }
+    .btn:hover { background: #2563eb; }
+    .btn-success { background: #10b981; }
+    .btn-success:hover { background: #059669; }
   </style>
 </head>
 <body>
-<div class="container">
-  <aside class="card sidebar">
-    <div class="logo">
-      <img id="logo" alt="Logo"  src="./logo.jpg"/>
-      <div>
-        <div style="font-weight:700;">铁路视频分析</div>
-        <div class="muted" style="font-size: 12px;">Railway Analysis</div>
+  <div class="container">
+    <div class="card">
+      <h1>视频分析校验</h1>
+      <p>Video Analysis Validation System</p>
+      <p>请选择以下方式之一来使用系统：</p>
+      
+      <div style="margin: 30px 0;">
+        <a href="http://localhost:5173" class="btn" target="_blank">访问视频分析校验系统</a>
+        <a href="/api/docs" class="btn btn-success" target="_blank">查看 API 文档</a>
+      </div>
+      
+      <div style="color: #6b7280; font-size: 14px; margin-top: 20px;">
+        <p>注意：Vue 前端应用需要先启动开发服务器</p>
+        <p><code>cd frontend && npm run dev</code></p>
       </div>
     </div>
-    <div style="font-weight:600; margin: 8px 0;">任务列表</div>
-    <ul id="jobs" class="jobs"></ul>
-  </aside>
-
-  <main class="card">
-    <h2>上传视频进行分析</h2>
-    <form id="uploadForm">
-      <label for="file">视频文件</label>
-      <input type="file" id="file" name="file" accept="video/*" required />
-      <label for="model">模型名称</label>
-      <select id="model" name="modelName">
-        <option value="dummy">dummy</option>
-      </select>
-      <div class="row"><button type="submit">提交</button></div>
-    </form>
-    <div class="status muted" id="status"></div>
-    <div class="result" id="result" hidden></div>
-  </main>
-</div>
-
-<script>
-const statusEl = document.getElementById('status');
-const resultEl = document.getElementById('result');
-let pollTimer = null;
-let currentJobId = null;
-
-// Load available models
-async function loadModels() {
-  try {
-    const res = await fetch('/api/video/models');
-    const models = await res.json();
-    const select = document.getElementById('model');
-    select.innerHTML = '';
-    models.forEach(model => {
-      const option = document.createElement('option');
-      option.value = model;
-      option.textContent = model;
-      select.appendChild(option);
-    });
-  } catch (err) {
-    console.warn('Failed to load models:', err);
-  }
-}
-
-document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  resultEl.hidden = true;
-  resultEl.textContent = '';
-  if (pollTimer) { clearInterval(pollTimer); }
-  
-  const form = new FormData();
-  const file = document.getElementById('file').files[0];
-  const modelName = document.getElementById('model').value;
-  form.append('file', file);
-  form.append('model_name', modelName);
-  
-  statusEl.textContent = '上传中...';
-  try {
-    const res = await fetch('/api/video/upload', { method: 'POST', body: form });
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.detail || '上传失败');
-    }
-    const data = await res.json();
-    const jobId = data.job_id;
-    currentJobId = jobId;
-    statusEl.textContent = '任务已创建：' + jobId + '，开始轮询状态...';
-    await refreshJobs();
-    selectJob(jobId);
-    pollTimer = setInterval(() => poll(jobId), 1000);
-  } catch (err) {
-    statusEl.textContent = '错误：' + err.message;
-  }
-});
-
-async function poll(jobId) {
-  try {
-    const res = await fetch(`/api/video/${jobId}/status`);
-    const data = await res.json();
-    statusEl.textContent = `状态：${data.status}${data.message ? '（' + data.message + '）' : ''}`;
-    
-    if (data.status === 'SUCCEEDED' || data.status === 'FAILED') {
-      clearInterval(pollTimer);
-      const r = await fetch(`/api/video/${jobId}/result`);
-      const d = await r.json();
-      resultEl.hidden = false;
-      resultEl.textContent = JSON.stringify(d, null, 2);
-      await refreshJobs();
-    }
-  } catch (err) {
-    statusEl.textContent = '轮询错误：' + err.message;
-    clearInterval(pollTimer);
-  }
-}
-
-// Load models on page load
-loadModels();
-
-// Logo setup: serve an image from server folder via /static
-const logoEl = document.getElementById('logo');
-// Try common names; you can replace with your actual file name
-const candidateLogos = ['logo.png', 'logo.jpg', 'logo.jpeg', 'logo.svg'];
-for (const name of candidateLogos) {
-  const url = `/static/${name}`;
-  const img = new Image();
-  img.onload = () => { logoEl.src = url; };
-  img.onerror = () => {};
-  img.src = url;
-}
-
-// Jobs list
-const jobsEl = document.getElementById('jobs');
-function badgeClass(status) {
-  if (status === 'SUCCEEDED') return 'badge success';
-  if (status === 'FAILED') return 'badge failed';
-  return 'badge running';
-}
-
-function selectJob(jobId) {
-  currentJobId = jobId;
-  [...jobsEl.children].forEach(li => {
-    li.style.background = li.dataset.id === jobId ? '#eef2ff' : '';
-  });
-  // Load result for selected job
-  (async () => {
-    try {
-      const r = await fetch(`/api/video/${jobId}/result`);
-      const d = await r.json();
-      resultEl.hidden = false;
-      resultEl.textContent = JSON.stringify(d, null, 2);
-    } catch (e) {
-      // ignore
-    }
-  })();
-}
-
-async function refreshJobs() {
-  try {
-    const res = await fetch('/api/video/jobs');
-    const jobs = await res.json();
-    jobsEl.innerHTML = '';
-    jobs.forEach(j => {
-      const li = document.createElement('li');
-      li.dataset.id = j.job_id;
-      li.innerHTML = `
-        <div style="display:flex; justify-content: space-between; align-items:center;">
-          <div style="font-weight:600;" class="mono">${j.original_filename || '(未命名)'}<div class="muted" style="font-size:12px;">${j.job_id}</div></div>
-          <span class="${badgeClass(j.status)}">${j.status}</span>
-        </div>
-      `;
-      li.addEventListener('click', () => selectJob(j.job_id));
-      jobsEl.appendChild(li);
-    });
-    if (currentJobId) selectJob(currentJobId);
-  } catch (e) {
-    // ignore
-  }
-}
-
-// initial jobs load and periodic refresh
-refreshJobs();
-setInterval(refreshJobs, 5000);
-</script>
+  </div>
 </body>
 </html>
-
